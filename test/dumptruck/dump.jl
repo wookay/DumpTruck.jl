@@ -1,4 +1,5 @@
-module test_dumptruck_dump
+using Jive
+@useinside Main module test_dumptruck_dump
 
 using Test
 using DumpTruck
@@ -30,9 +31,16 @@ end
 
 dump_expr(  :(1 + 2)        )
 dump_expr(  :(1 + (2 * 3))  )
+
 @dump_object "hello"
 @dump_object SubString("hello")
 @dump_object [1, 2, 3]
+
+struct Animal
+    field
+end
+dog = Animal(1)
+@dump_object dog
 
 
 @test true
