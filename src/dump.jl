@@ -1,6 +1,9 @@
-export highlight
+# module DumpTruck
 
 using REPL
+
+function highlight
+end
 if isdefined(REPL, :JuliaSyntaxHighlighting) # VERSION >= v"1.12"
     function highlight(s::AbstractString)
         REPL.JuliaSyntaxHighlighting.highlight(s)
@@ -10,8 +13,12 @@ if isdefined(REPL, :JuliaSyntaxHighlighting) # VERSION >= v"1.12"
         highlight(s)
     end
 else
+    function highlight(s::AbstractString)
+        s
+    end
     function highlight(x)
-        repr(x)
+        s = sprint(show, "text/plain", x)
+        highlight(s)
     end
 end
 
@@ -19,7 +26,7 @@ end
 function dump_x(io::IOContext, @nospecialize(x), n::Int, indent)
     print(io, highlight(typeof(x)))
     print(io, "  ")
-    print(io, highlight(x))
+    print(io, highlight(repr(x)))
 end
 
 using Base: show_circular, dump_elts
@@ -27,8 +34,8 @@ function dump_x(io::IOContext, x::Array, n::Int, indent)
     print(io, highlight(string("Array{", eltype(x), "}")))
     print(io, "  size = ", highlight(size(x)))
     if eltype(x) <: Number
-        print(io, " ")
-        show(io, x)
+        print(io, "  ")
+        print(io, highlight(repr(x)))
     else
         if n > 0 && !isempty(x) && !show_circular(io, x)
             println(io)
@@ -50,7 +57,7 @@ function dump_x(io::IOContext, x::Array, n::Int, indent)
 end
 
 using Base: undef_ref_str
-function dump_expr(io::IOContext, @nospecialize(x), n::Int, indent)
+function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
     if x === Union{}
         show(io, x)
         return
@@ -84,14 +91,25 @@ function dump_expr(io::IOContext, @nospecialize(x), n::Int, indent)
 end
 
 import Base: dump
-function dump(io::IOContext, @nospecialize(x), n::Int, indent::String)
-    dump_x(io, x, n, indent)
-end
-
+# overrided by indent::String
 function dump(io::IOContext, x::Expr, n::Int, indent::String)
-    dump_expr(io, x, n, indent)
+    dump_object(io, x, n, indent)
 end
 
 function dump(io::IOContext, x::Symbol, n::Int, indent::String)
+    dump_object(io, x, n, indent)
+end
+
+function dump(io::IOContext, x::String, n::Int, indent::String)
+    dump_object(io, x, n, indent) # @nospecialize(x)
+end
+
+function dump(io::IOContext, x::AbstractString, n::Int, indent::String)
+    dump_object(io, x, n, indent) # @nospecialize(x)
+end
+
+function dump(io::IOContext, x::Array, n::Int, indent::String)
     dump_x(io, x, n, indent)
 end
+
+# module DumpTruck

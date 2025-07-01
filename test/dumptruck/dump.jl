@@ -1,15 +1,36 @@
-using DumpTruck
+module test_dumptruck_dump
 
-function dump_expr(expr::Expr; LF::Bool = true)
+using Test
+using DumpTruck
+using Jive
+
+function dump_expr(x::Expr)
     printstyled("dump"; color = :cyan)
-    println("(", highlight(expr), ")")
-    dump(expr)
-    LF && println()
+    print("(")
+    print(highlight(x))
+    print(")")
+    println()
+    dump(x)
+    println()
+end
+
+macro dump_object(@nospecialize(x))
+    printstyled("dump"; color = :cyan)
+    print("(")
+    print(highlight(string(x)))
+    print(")")
+    println()
+    dump(eval(x))
+    println()
 end
 
 dump_expr(  :(1 + 2)        )
-dump_expr(  :(1 + (2 * 3))  , LF = false)
+dump_expr(  :(1 + (2 * 3))  )
+@dump_object "hello"
+@dump_object SubString("hello")
+@dump_object [1, 2, 3]
 
 
-using Test
 @test true
+
+end # module test_dumptruck_dump
