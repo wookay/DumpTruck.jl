@@ -7,7 +7,7 @@ if isdefined(REPL, :JuliaSyntaxHighlighting) # VERSION >= v"1.12"
     end
     function highlight(x)
         s = sprint(show, "text/plain", x)
-        REPL.JuliaSyntaxHighlighting.highlight(s)
+        highlight(s)
     end
 else
     function highlight(x)
@@ -17,13 +17,15 @@ end
 
 # from julia/base/show.jl
 function dump_x(io::IOContext, @nospecialize(x), n::Int, indent)
-    print(io, typeof(x), " ")
+    print(io, highlight(typeof(x)))
+    print(io, "  ")
     print(io, highlight(x))
 end
 
 using Base: show_circular, dump_elts
 function dump_x(io::IOContext, x::Array, n::Int, indent)
-    print(io, "Array{", eltype(x), "}  size = ", highlight(size(x)))
+    print(io, highlight(string("Array{", eltype(x), "}")))
+    print(io, "  size = ", highlight(size(x)))
     if eltype(x) <: Number
         print(io, " ")
         show(io, x)
@@ -55,9 +57,9 @@ function dump_expr(io::IOContext, @nospecialize(x), n::Int, indent)
     end
     T = typeof(x)
     if isa(x, Function)
-        print(io, x, " (function of type ", T, ")")
+        print(io, x, " (function of type ", highlight(T), ")")
     else
-        print(io, T)
+        print(io, highlight(T))
     end
     nf = nfields(x)
     if nf > 0
