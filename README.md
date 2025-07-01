@@ -2,7 +2,9 @@
 
 [![CI](https://github.com/wookay/DumpTruck.jl/actions/workflows/actions.yml/badge.svg)](https://github.com/wookay/DumpTruck.jl/actions/workflows/actions.yml)
 
-highlight `dump(::Expr)`. requires Julia v1.12
+highlight `dump(::Expr)`
+Requires Julia v1.12.
+See the [github actions logs](https://github.com/wookay/DumpTruck.jl/actions/runs/16000992308/job/45135628527#step:6:103).
 
 ```julia
 julia> using DumpTruck
