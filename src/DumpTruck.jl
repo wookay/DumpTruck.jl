@@ -1,6 +1,6 @@
 module DumpTruck
 
-export dump, highlight
+export dump
 include("dump.jl")
 
 end # module DumpTruck

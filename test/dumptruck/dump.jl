@@ -8,7 +8,7 @@ using Jive
 function dump_expr(x::Expr)
     printstyled("dump"; color = :cyan)
     print("(")
-    print(highlight(x))
+    print(DumpTruck.highlight(x))
     print(")")
     println()
     dump(x)
@@ -19,9 +19,9 @@ macro dump_object(@nospecialize(x))
     printstyled("dump"; color = :cyan)
     print("(")
     if eval(x) isa String
-        print(highlight(repr(x)))
+        print(DumpTruck.highlight(repr(x)))
     else
-        print(highlight(string(x)))
+        print(DumpTruck.highlight(string(x)))
     end
     print(")")
     println()
