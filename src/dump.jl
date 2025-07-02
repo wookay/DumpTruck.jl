@@ -100,6 +100,10 @@ function dump(io::IOContext, x::Symbol, n::Int, indent::String)
     dump_x(io, x, n, indent)
 end
 
+function dump(io::IOContext, x::Number, n::Int, indent::String)
+    dump_x(io, x, n, indent)
+end
+
 function dump(io::IOContext, x::Array, n::Int, indent::String)
     dump_x(io, x, n, indent)
 end
