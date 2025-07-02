@@ -26,7 +26,6 @@ function in_julia_core(m::Module)
     m in (Core, Base)
 end
 
-# from julia/base/show.jl
 function dump_x(io::IOContext, @nospecialize(x), n::Int, indent)
     print(io, highlight(typeof(x)))
     print(io, "  ")
@@ -59,33 +58,109 @@ function dump_x(io::IOContext, x::Module, n::Int, indent)
     end
 end
 
-function dump_x(io::IOContext, x::Memory,  n::Int, indent)
-    printstyled(io, string(typeof(x)); color = :yellow)
-    print(io, "  ")
-    print(io, highlight(repr(x)))
+# from julia/base/show.jl  function dump_elts(io::IOContext, x::Array, n::Int, indent, i0, i1)
+using Base: undef_ref_str
+function dump_elts_x(io::IOContext, x::Array, n::Int, indent, i0, i1)
+    for i in i0:i1
+        print(io, indent, "  ")
+        printstyled(io, i; color = :light_cyan)
+        print(io, ": ")
+        if !isassigned(x,i)
+            print(io, highlight(undef_ref_str))
+        else
+            dump(io, x[i], n - 1, string(indent, "  "))
+        end
+        i < i1 && println(io)
+    end
 end
 
+function dump_elts_delim_array(io::IOContext, x, n::Int, indent, i0, i1)
+    for i in i0:i1
+        if !isassigned(x, i)
+            print(io, highlight(undef_ref_str))
+        else
+            print(io, highlight(repr(x[i])))
+        end
+        i < i1 && print(io, ", ")
+    end
+end
+
+function dump_elts_delim_dict(io::IOContext, dict, dict_keys, n::Int, indent, i0, i1)
+    for i in i0:i1
+        k = dict_keys[i]
+        v = dict[k]
+        print(io, highlight(repr(k => v)))
+        i < i1 && print(io, ", ")
+    end
+end
+
+# from julia/base/show.jl  function dump(io::IOContext, x::Array, n::Int, indent)
+function dump_x(io::IOContext, x::AbstractDict{K,V}, n::Int, indent) where {K,V}
+    print(io, highlight(typeof(x)))
+    print(io, "  length = ", highlight(length(x)))
+    if n > 0 && !isempty(x)
+        println(io)
+        recur_io = IOContext(io, :SHOWN_SET => x)
+        dict_keys = collect(keys(x))
+        lx = length(x)
+        if get(io, :limit, false)::Bool
+            print(io, indent, "  ")
+            dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, 1, (lx <= 10 ? lx : 5))
+            if lx > 10
+                print(io, ",")
+                println(io)
+                print(io, indent, "  ")
+                printstyled(io, "… "; color = :light_black)
+                println(io)
+                print(io, indent, "  ")
+                dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, lx - 4, lx)
+            end
+        else
+            dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, 1, lx)
+        end
+    end
+end
+
+# from julia/base/show.jl  function dump(io::IOContext, x::Array, n::Int, indent)
 using Base: show_circular, dump_elts
-function dump_x(io::IOContext, x::Array, n::Int, indent)
-    print(io, highlight(string("Array{", eltype(x), "}")))
+function dump_x(io::IOContext, x::Union{Memory, Array}, n::Int, indent)
+    print(io, highlight(repr(typeof(x))))
     print(io, "  size = ", highlight(size(x)))
-    if eltype(x) <: Number
-        print(io, "  ")
-        print(io, highlight(repr(x)))
-    else
+    if x isa Memory || eltype(x) <: Number
+        if n > 0 && !isempty(x) && !show_circular(io, x)
+            print(io, "  ")
+            printstyled("["; color = :light_yellow)
+            recur_io = IOContext(io, :SHOWN_SET => x)
+            lx = length(x)
+            if get(io, :limit, false)::Bool
+                dump_elts_delim_array(recur_io, x, n, indent, 1, (lx <= 10 ? lx : 5))
+                if lx > 10
+                    print(io, ", ")
+                    printstyled(io, "… "; color = :light_black)
+                    print(io, " ")
+                    dump_elts_delim_array(recur_io, x, n, indent, lx - 4, lx)
+                end
+            else
+                dump_elts_delim_array(recur_io, x, n, indent, 1, lx)
+            end
+            printstyled("]"; color = :light_yellow)
+        end
+    else # if x isa Memory || eltype(x) <: Number
         if n > 0 && !isempty(x) && !show_circular(io, x)
             println(io)
             recur_io = IOContext(io, :SHOWN_SET => x)
             lx = length(x)
             if get(io, :limit, false)::Bool
-                dump_elts(recur_io, x, n, indent, 1, (lx <= 10 ? lx : 5))
+                dump_elts_x(recur_io, x, n, indent, 1, (lx <= 10 ? lx : 5))
                 if lx > 10
                     println(io)
-                    println(io, indent, "  ...")
-                    dump_elts(recur_io, x, n, indent, lx - 4, lx)
+                    print(io, indent, "  ")
+                    printstyled(io, "… "; color = :light_black)
+                    println(io)
+                    dump_elts_x(recur_io, x, n, indent, lx - 4, lx)
                 end
             else
-                dump_elts(recur_io, x, n, indent, 1, lx)
+                dump_elts_x(recur_io, x, n, indent, 1, lx)
             end
         end
     end
@@ -138,7 +213,7 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
     nothing
 end
 
-using Base: undef_ref_str
+# from julia/base/show.jl  function dump(io::IOContext, @nospecialize(x), n::Int, indent)
 function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
     if x === Union{}
         show(io, x)
@@ -161,13 +236,19 @@ function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
             recur_io = IOContext(io, Pair{Symbol,Any}(:SHOWN_SET, x))
             for field in 1:nf
                 println(io)
-                fname = string(fieldname(T, field))
-                print(io, indent, "  ", fname)
-                printstyled(io, "::"; color = :light_black)
-                if isdefined(x,field)
+                print(io, indent, "  ")
+                field_name = fieldname(T, field)
+                if field == field_name
+                    printstyled(io, field; color = :light_cyan)
+                    printstyled(io, ": "; color = :light_black)
+                else
+                    print(io, field_name)
+                    printstyled(io, "::"; color = :light_black)
+                end
+                if isdefined(x, field)
                     dump_x(recur_io, getfield(x, field), n - 1, string(indent, "  "))
                 else
-                    print(io, undef_ref_str)
+                    print(io, highlight(undef_ref_str))
                 end
             end
         end
@@ -178,8 +259,8 @@ function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
     nothing
 end
 
+# `dump` overrided by indent::String
 import Base: dump
-# overrided by indent::String
 function dump(io::IOContext, x::Module, n::Int, indent::String)
     dump_x(io, x, n, indent)
 end
