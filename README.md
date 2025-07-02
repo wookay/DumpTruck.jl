@@ -4,7 +4,7 @@
 
 highlight `dump(::Expr)`
 Requires Julia v1.12.
-See the [github actions logs](https://github.com/wookay/DumpTruck.jl/actions/runs/16014076733/job/45177322491#step:6:102).
+See the [github actions logs](https://github.com/wookay/DumpTruck.jl/actions/runs/16014290117/job/45177890041#step:6:102).
 
 ```julia
 julia> using DumpTruck
