@@ -22,9 +22,35 @@ else
     end
 end
 
+function in_julia_core(m::Module)
+    m in (Core, Base)
+end
+
 # from julia/base/show.jl
 function dump_x(io::IOContext, @nospecialize(x), n::Int, indent)
     print(io, highlight(typeof(x)))
+    print(io, "  ")
+    print(io, highlight(repr(x)))
+end
+
+function dump_x(io::IOContext, x::AbstractChar, n::Int, indent)
+    print(io, highlight(typeof(x)))
+    print(io, "  ")
+    REPL.show_repl(io, MIME("text/plain"), x)
+end
+
+function dump_x(io::IOContext, x::Module, n::Int, indent)
+    print(io, highlight(typeof(x)))
+    print(io, "  ")
+    if in_julia_core(x)
+        printstyled(io, x; color = :blue)
+    else
+        printstyled(io, x; color = :green)
+    end
+end
+
+function dump_x(io::IOContext, x::Memory,  n::Int, indent)
+    printstyled(io, string(typeof(x)); color = :yellow)
     print(io, "  ")
     print(io, highlight(repr(x)))
 end
@@ -64,9 +90,10 @@ function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
     end
     T = typeof(x)
     if isa(x, Function)
-        print(io, x, " (function of type ", highlight(T), ")")
+        print(io, highlight(T), "  ")
+        printstyled(io, x; color = :cyan)
     else
-        if parentmodule(T) in (Core, Base)
+        if in_julia_core(parentmodule(T))
             print(io, highlight(T))
         else
             printstyled(io, T; color = :green)
@@ -88,8 +115,8 @@ function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
             end
         end
     elseif !isa(x, Function)
-        print(io, " ")
-        show(io, x)
+        print(io, "  ")
+        print(io, highlight(x))
     end
     nothing
 end
@@ -100,7 +127,11 @@ function dump(io::IOContext, x::Symbol, n::Int, indent::String)
     dump_x(io, x, n, indent)
 end
 
-function dump(io::IOContext, x::Number, n::Int, indent::String)
+function dump(io::IOContext, x::AbstractChar, n::Int, indent::String)
+    dump_x(io, x, n, indent)
+end
+
+function dump(io::IOContext, x::Module, n::Int, indent::String)
     dump_x(io, x, n, indent)
 end
 
