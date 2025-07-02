@@ -66,7 +66,11 @@ function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
     if isa(x, Function)
         print(io, x, " (function of type ", highlight(T), ")")
     else
-        print(io, highlight(T))
+        if parentmodule(T) in (Core, Base)
+            print(io, highlight(T))
+        else
+            printstyled(io, T; color = :green)
+        end
     end
     nf = nfields(x)
     if nf > 0
@@ -96,16 +100,16 @@ function dump(io::IOContext, x::Symbol, n::Int, indent::String)
     dump_x(io, x, n, indent)
 end
 
+function dump(io::IOContext, x::Array, n::Int, indent::String)
+    dump_x(io, x, n, indent)
+end
+
 function dump(io::IOContext, x::String, n::Int, indent::String)
     dump_x(io, x, n, indent) # @nospecialize(x)
 end
 
 function dump(io::IOContext, x::AbstractString, n::Int, indent::String)
-    dump_x(io, x, n, indent) # @nospecialize(x)
-end
-
-function dump(io::IOContext, x::Array, n::Int, indent::String)
-    dump_x(io, x, n, indent)
+    dump_object(io, x, n, indent) # @nospecialize(x)
 end
 
 function dump(io::IOContext, x::Expr, n::Int, indent::String)
