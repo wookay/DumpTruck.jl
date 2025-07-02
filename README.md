@@ -11,13 +11,13 @@ julia> using DumpTruck
 
 julia> dump(:(1 + 2 * 3))
 Expr
-  head: Symbol  :call
-  args: Array{Any}  size = (3,)
+  head::Symbol  :call
+  args::Array{Any}  size = (3,)
     1: Symbol  :+
     2: Int64  1
     3: Expr
-      head: Symbol  :call
-      args: Array{Any}  size = (3,)
+      head::Symbol  :call
+      args::Array{Any}  size = (3,)
         1: Symbol  :*
         2: Int64  2
         3: Int64  3
