@@ -104,7 +104,10 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
     isabstracttype(x) && printstyled(io, "abstract type "; color = :light_yellow)
     printstyled(io, x; color = :green)
     if x !== Any
-        print(io, " <: ", highlight(supertype(x)))
+        print(io, " ")
+        printstyled(io, "<:"; color = :light_yellow)
+        print(io, " ")
+        print(io, highlight(supertype(x)))
     end
     if n > 0 && !(x <: Tuple) && !isabstracttype(x)
         tvar_io::IOContext = io
