@@ -36,7 +36,11 @@ end
 function dump_x(io::IOContext, x::AbstractChar, n::Int, indent)
     print(io, highlight(typeof(x)))
     print(io, "  ")
-    REPL.show_repl(io, MIME("text/plain"), x)
+    if isdefined(REPL, :show_repl)
+        REPL.show_repl(io, MIME("text/plain"), x)
+    else
+        show(io, "text/plain", x)
+    end
 end
 
 function dump_x(io::IOContext, x::Module, n::Int, indent)
