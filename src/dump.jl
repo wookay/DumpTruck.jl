@@ -92,24 +92,24 @@ end
 
 import Base: dump
 # overrided by indent::String
-function dump(io::IOContext, x::Expr, n::Int, indent::String)
-    dump_object(io, x, n, indent)
-end
-
 function dump(io::IOContext, x::Symbol, n::Int, indent::String)
-    dump_object(io, x, n, indent)
+    dump_x(io, x, n, indent)
 end
 
 function dump(io::IOContext, x::String, n::Int, indent::String)
-    dump_object(io, x, n, indent) # @nospecialize(x)
+    dump_x(io, x, n, indent) # @nospecialize(x)
 end
 
 function dump(io::IOContext, x::AbstractString, n::Int, indent::String)
-    dump_object(io, x, n, indent) # @nospecialize(x)
+    dump_x(io, x, n, indent) # @nospecialize(x)
 end
 
 function dump(io::IOContext, x::Array, n::Int, indent::String)
     dump_x(io, x, n, indent)
+end
+
+function dump(io::IOContext, x::Expr, n::Int, indent::String)
+    dump_object(io, x, n, indent)
 end
 
 function dump(io::IOContext, @nospecialize(x), n::Int, indent::String)
