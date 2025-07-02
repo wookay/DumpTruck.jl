@@ -36,6 +36,7 @@ dump_expr(  :(1 + (2 * 3))  )
 @dump_object SubString("hello")
 @dump_object '🚚'
 @dump_object true
+@dump_object false
 @dump_object 1 + 2
 @dump_object pi
 @dump_object [1, 2, 3]
@@ -51,6 +52,7 @@ struct Animal
     field
 end
 dog = Animal(1)
+@dump_object Animal
 @dump_object dog
 
 @test true
