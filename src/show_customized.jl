@@ -1,62 +1,11 @@
 # module DumpTruck
 
-using REPL
-
-function highlight
-end
-if isdefined(REPL, :JuliaSyntaxHighlighting) # VERSION >= v"1.12"
-    function highlight(s::AbstractString)
-        REPL.JuliaSyntaxHighlighting.highlight(s)
-    end
-    function highlight(x)
-        s = sprint(show, "text/plain", x)
-        highlight(s)
-    end
-else
-    function highlight(s::AbstractString)
-        s
-    end
-    function highlight(x)
-        s = sprint(show, "text/plain", x)
-        highlight(s)
-    end
-end
-
 function in_julia_core(m::Union{Module, DataType})
     m in (Core, Base)
 end
 
-function dump_x(io::IOContext, @nospecialize(x), n::Int, indent)
-    print(io, highlight(typeof(x)))
-    print(io, "  ")
-    print(io, highlight(repr(x)))
-end
 
-function dump_x(io::IOContext, x::AbstractChar, n::Int, indent)
-    print(io, highlight(typeof(x)))
-    print(io, "  ")
-    if isdefined(REPL, :show_repl)
-        REPL.show_repl(io, MIME("text/plain"), x)
-    else
-        show(io, "text/plain", x)
-    end
-end
-
-function dump_x(io::IOContext, x::Bool, n::Int, indent)
-    print(io, highlight(typeof(x)))
-    print(io, "  ")
-    printstyled(io, x; color = x ? :light_green : :light_red)
-end
-
-function dump_x(io::IOContext, x::Module, n::Int, indent)
-    print(io, highlight(typeof(x)))
-    print(io, "  ")
-    if in_julia_core(x)
-        printstyled(io, x; color = :light_blue)
-    else
-        printstyled(io, x; color = :green)
-    end
-end
+### dump_elts
 
 # from julia/base/show.jl  function dump_elts(io::IOContext, x::Array, n::Int, indent, i0, i1)
 using Base: undef_ref_str
@@ -94,6 +43,44 @@ function dump_elts_delim_dict(io::IOContext, dict, dict_keys, n::Int, indent, i0
     end
 end
 
+
+### dump_x
+
+function dump_x(io::IOContext, @nospecialize(x), n::Int, indent)
+    print(io, highlight(typeof(x)))
+    print(io, "  ")
+    print(io, highlight(repr(x)))
+end
+
+function dump_x(io::IOContext, x::AbstractChar, n::Int, indent)
+    print(io, highlight(typeof(x)))
+    print(io, "  ")
+    if isdefined(REPL, :show_repl)
+        REPL.show_repl(io, MIME("text/plain"), x)
+    else
+        show(io, "text/plain", x)
+    end
+end
+
+function dump_x(io::IOContext, x::Bool, n::Int, indent)
+    print(io, highlight(typeof(x)))
+    print(io, "  ")
+    printstyled(io, x; color = x ? :light_green : :light_red)
+end
+
+function dump_x(io::IOContext, x::Module, n::Int, indent)
+    print(io, highlight(typeof(x)))
+    print(io, "  ")
+    if in_julia_core(x)
+        printstyled(io, x; color = :light_blue)
+    else
+        printstyled(io, x; color = :green)
+    end
+end
+
+const dumptruck_limit_half = 3 # 5
+const dumptruck_limit_full = 2 * dumptruck_limit_half
+
 # from julia/base/show.jl  function dump(io::IOContext, x::Array, n::Int, indent)
 function dump_x(io::IOContext, x::AbstractDict{K,V}, n::Int, indent) where {K,V}
     print(io, highlight(typeof(x)))
@@ -105,15 +92,14 @@ function dump_x(io::IOContext, x::AbstractDict{K,V}, n::Int, indent) where {K,V}
         lx = length(x)
         if get(io, :limit, false)::Bool
             print(io, indent, "  ")
-            dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, 1, (lx <= 10 ? lx : 5))
-            if lx > 10
+            dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, 1, (lx <= dumptruck_limit_full ? lx : dumptruck_limit_half))
+            if lx > dumptruck_limit_full
                 print(io, ",")
                 println(io)
                 print(io, indent, "  ")
                 printstyled(io, "… "; color = :light_black)
-                println(io)
-                print(io, indent, "  ")
-                dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, lx - 4, lx)
+                print(io, " ")
+                dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, lx - (dumptruck_limit_half - 1), lx)
             end
         else
             dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, 1, lx)
@@ -133,12 +119,12 @@ function dump_x(io::IOContext, x::Union{Memory, Array}, n::Int, indent)
             recur_io = IOContext(io, :SHOWN_SET => x)
             lx = length(x)
             if get(io, :limit, false)::Bool
-                dump_elts_delim_array(recur_io, x, n, indent, 1, (lx <= 10 ? lx : 5))
-                if lx > 10
+                dump_elts_delim_array(recur_io, x, n, indent, 1, (lx <= dumptruck_limit_full ? lx : dumptruck_limit_half))
+                if lx > dumptruck_limit_full
                     print(io, ", ")
                     printstyled(io, "… "; color = :light_black)
                     print(io, " ")
-                    dump_elts_delim_array(recur_io, x, n, indent, lx - 4, lx)
+                    dump_elts_delim_array(recur_io, x, n, indent, lx - (dumptruck_limit_half - 1), lx)
                 end
             else
                 dump_elts_delim_array(recur_io, x, n, indent, 1, lx)
@@ -151,13 +137,13 @@ function dump_x(io::IOContext, x::Union{Memory, Array}, n::Int, indent)
             recur_io = IOContext(io, :SHOWN_SET => x)
             lx = length(x)
             if get(io, :limit, false)::Bool
-                dump_elts_x(recur_io, x, n, indent, 1, (lx <= 10 ? lx : 5))
-                if lx > 10
+                dump_elts_x(recur_io, x, n, indent, 1, (lx <= dumptruck_limit_full ? lx : dumptruck_limit_half))
+                if lx > dumptruck_limit_full
                     println(io)
                     print(io, indent, "  ")
                     printstyled(io, "… "; color = :light_black)
                     println(io)
-                    dump_elts_x(recur_io, x, n, indent, lx - 4, lx)
+                    dump_elts_x(recur_io, x, n, indent, lx - (dumptruck_limit_half - 1), lx)
                 end
             else
                 dump_elts_x(recur_io, x, n, indent, 1, lx)
@@ -217,6 +203,20 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
     nothing
 end
 
+
+### dump_object
+
+function dump_object(io::IOContext, x::LineNumberNode, n::Int, indent)
+    print(io, highlight(typeof(x)), "  ")
+    if x.file isa Symbol
+        file = Symbol(contractuser(String(x.file)))
+        lnn = LineNumberNode(x.line, file)
+    else
+        lnn = x
+    end
+    printstyled(io, highlight(lnn))
+end
+
 # from julia/base/show.jl  function dump(io::IOContext, @nospecialize(x), n::Int, indent)
 function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
     if x === Union{}
@@ -261,48 +261,6 @@ function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
         print(io, highlight(x))
     end
     nothing
-end
-
-# `dump` overrided by indent::String
-import Base: dump
-function dump(io::IOContext, x::Module, n::Int, indent::String)
-    dump_x(io, x, n, indent)
-end
-
-function dump(io::IOContext, x::Symbol, n::Int, indent::String)
-    dump_x(io, x, n, indent)
-end
-
-function dump(io::IOContext, x::AbstractChar, n::Int, indent::String)
-    dump_x(io, x, n, indent)
-end
-
-function dump(io::IOContext, x::Bool, n::Int, indent::String)
-    dump_x(io, x, n, indent)
-end
-
-function dump(io::IOContext, x::Array, n::Int, indent::String)
-    dump_x(io, x, n, indent)
-end
-
-function dump(io::IOContext, x::String, n::Int, indent::String)
-    dump_x(io, x, n, indent) # @nospecialize(x)
-end
-
-function dump(io::IOContext, x::DataType, n::Int, indent::String)
-    dump_x(io, x, n, indent)
-end
-
-function dump(io::IOContext, x::AbstractString, n::Int, indent::String)
-    dump_object(io, x, n, indent) # @nospecialize(x)
-end
-
-function dump(io::IOContext, x::Expr, n::Int, indent::String)
-    dump_object(io, x, n, indent)
-end
-
-function dump(io::IOContext, @nospecialize(x), n::Int, indent::String)
-    dump_object(io, x, n, indent)
 end
 
 # module DumpTruck
