@@ -22,7 +22,7 @@ else
     end
 end
 
-function in_julia_core(m::Module)
+function in_julia_core(m::Union{Module, DataType})
     m in (Core, Base)
 end
 
@@ -182,7 +182,11 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
         print(io, " ")
         printstyled(io, "<:"; color = :light_yellow)
         print(io, " ")
-        print(io, highlight(supertype(x)))
+        if in_julia_core(supertype(x))
+            print(io, highlight(supertype(x)))
+        else
+            printstyled(io, supertype(x); color = :light_green)
+        end
     end
     if n > 0 && !(x <: Tuple) && !isabstracttype(x)
         tvar_io::IOContext = io

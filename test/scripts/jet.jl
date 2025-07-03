@@ -19,7 +19,7 @@ println()
 
 using DumpTruck
 function dumping()
-    dump(  :(1 + 2)  )
+    include(normpath(@__DIR__, "../test/runtests.jl"))
 end
 
 using DumpTruck
