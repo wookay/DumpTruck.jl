@@ -78,7 +78,7 @@ function dump_x(io::IOContext, x::Array, n::Int, indent)
 end
 
 # from julia/base/show.jl  function dump(io::IOContext, x::DataType, n::Int, indent)
-using Base: _NAMEDTUPLE_NAME, datatype_fieldtypes
+using Base: _NAMEDTUPLE_NAME, datatype_fieldtypes, DUMP_DEFAULT_MAXDEPTH
 function dump_x(io::IOContext, x::DataType, n::Int, indent)
     # For some reason, tuples are structs
     is_struct = isstructtype(x) && !(x <: Tuple)
@@ -122,6 +122,18 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
                 printstyled(io, "::"; color = :light_black)
                 print(tvar_io, highlight(fieldtypes[idx]))
             end
+        end
+    elseif n == DUMP_DEFAULT_MAXDEPTH
+        for name in propertynames(x)
+            name === :instance && continue
+            println(io)
+            print(io, indent, "  ")
+            print(io, name)
+            printstyled(io, "::"; color = :light_black)
+            prop = getproperty(x, name)
+            print(io, highlight(typeof(prop)))
+            print(io, "  ")
+            print(io, highlight(prop))
         end
     end
     nothing
@@ -205,7 +217,6 @@ const dumptruck_limit_half = 3 # 5
 const dumptruck_limit_full = 2 * dumptruck_limit_half
 
 # from julia/base/show.jl  function dump(io::IOContext, x::Array, n::Int, indent)
-using Base: DUMP_DEFAULT_MAXDEPTH
 function dump_x(io::IOContext, x::AbstractDict{K,V}, n::Int, indent) where {K,V}
     print(io, highlight(typeof(x)))
     print(io, "  length = ", highlight(length(x)))

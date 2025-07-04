@@ -14,18 +14,24 @@ using .REPL.InteractiveUtils: supertypes
 @dump_object keys(REPL.REPLCompletions.latex_symbols)
 
 @dump_object Union{}
+@dump_object Union{Int, String, Nothing}
 @dump_object Union
 @dump_object UnionAll
 
+@test Union{} isa Core.TypeofBottom
+@test Union{Int, String, Nothing} isa Union
+@test Union isa DataType
+@test Vector isa UnionAll
+@test Vector{Int} isa DataType
+
 TypeT = supertype(Union)
+println(DumpTruck.highlight("TypeT = supertype(Union)"))
 @dump_object TypeT
+@dump_object Type{T} where T
 
 @test TypeT.parameters[1] isa TypeVar
-@test supertype(Union) === TypeT
-@test supertype(UnionAll) === TypeT
+@test supertype(Union) === supertype(UnionAll) === TypeT
 @test (Type{T} where T) isa UnionAll
 @test supertype(Type{T} where T) === Any
-
-@dump_object Type{T} where T
 
 end # module test_dumptruck_advanced
