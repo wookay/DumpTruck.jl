@@ -87,7 +87,7 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
     is_struct && printstyled(io, "struct "; color = :light_yellow)
     isprimitivetype(x) && printstyled(io, "primitive type "; color = :light_yellow)
     isabstracttype(x) && printstyled(io, "abstract type "; color = :light_yellow)
-    printstyled(io, x; color = :green)
+    printstyled(io, x; color = :light_green)
     if x !== Any
         print(io, " ")
         printstyled(io, "<:"; color = :light_yellow)
@@ -130,10 +130,6 @@ end
 # from julia/base/show.jl  dump(io::IOContext, @nospecialize(x), n::Int, indent)
 using Base: undef_ref_str
 function dump_x(io::IOContext, @nospecialize(x), n::Int, indent)
-    if x === Union{}
-        print(io, highlight(x))
-        return
-    end
     T = typeof(x)
     if isa(x, Function)
         print(io, highlight(T))
@@ -182,6 +178,11 @@ end
 
 # dump_x (customized)
 
+function dump_x(io::IOContext, x::Core.TypeofBottom, n::Int, indent) # x === Union{}
+    print(io, highlight(x))
+    nothing
+end
+
 function dump_x(io::IOContext, x::Bool, n::Int, indent)
     print(io, highlight(typeof(x)))
     print(io, "  ")
@@ -212,7 +213,8 @@ function dump_x(io::IOContext, x::AbstractDict{K,V}, n::Int, indent) where {K,V}
         recur_io = IOContext(io, :SHOWN_SET => x)
         dict_keys = collect(keys(x))
         lx = length(x)
-        print(io, "  ")
+        println(io)
+        print(io, indent, "  ")
         printstyled("("; color = :light_blue)
         if get(io, :limit, false)::Bool
             dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, 1, (lx <= dumptruck_limit_full ? lx : dumptruck_limit_half))
