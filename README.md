@@ -4,7 +4,7 @@
 
 highlight the `dump` function.
 Requires Julia v1.12.
-See the [github actions logs](https://github.com/wookay/DumpTruck.jl/actions/runs/16075729041/job/45370395308#step:6:102).
+See the [github actions logs](https://github.com/wookay/DumpTruck.jl/actions/runs/16083570456/job/45391633345#step:6:102).
 
 <img src="https://raw.github.com/wookay/DumpTruck.jl/main/docs/images/dump.png" alt="DumpTruck.dump" width="436" height="430">
 
