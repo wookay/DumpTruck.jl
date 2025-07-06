@@ -6,7 +6,7 @@ highlight the `dump` function.
 Requires Julia v1.12.
 See the [github actions logs](https://github.com/wookay/DumpTruck.jl/actions/runs/16083570456/job/45391633345#step:6:102).
 
-<img src="https://raw.github.com/wookay/DumpTruck.jl/main/docs/images/dump.png" alt="DumpTruck.dump" width="436" height="430">
+<img src="https://raw.github.com/wookay/DumpTruck.jl/main/docs/images/dump.png" alt="DumpTruck.dump" width="465" height="426">
 
 ```julia
 julia> using DumpTruck
@@ -23,13 +23,4 @@ Expr
         1: Symbol  :*
         2: Int64  2
         3: Int64  3
-
-julia> dump(supertypes(Int))
-NTuple{6, DataType}
-  1: primitive type Int64 <: Signed
-  2: abstract type Signed <: Integer
-  3: abstract type Integer <: Real
-  4: abstract type Real <: Number
-  5: abstract type Number <: Any
-  6: abstract type Any
 ```
