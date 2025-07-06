@@ -34,4 +34,8 @@ println(DumpTruck.highlight("TypeT = supertype(Union)"))
 @test (Type{T} where T) isa UnionAll
 @test supertype(Type{T} where T) === Any
 
+println(DumpTruck.highlight("lnn = LineNumberNode(@__LINE__, @__FILE__)"))
+lnn = LineNumberNode(@__LINE__, @__FILE__)
+@dump_object lnn
+
 end # module test_dumptruck_advanced

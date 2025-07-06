@@ -4,12 +4,22 @@ function _in_julia_core(m::Union{Module, DataType})
     m in (Core, Base)
 end
 
+function _print_type(io::IOContext, @nospecialize(x))
+    get(io, :PRINTED, :(unreachable)) === x && return
+    T = typeof(x)
+    if _in_julia_core(parentmodule(T))
+        print(io, highlight(repr(T)))
+    else
+        printstyled(io, T; color = :green)
+    end
+end
+
 
 ### dump_x (overrided)
 
 # from julia/base/show.jl  dump(io::IOContext, x::Module, n::Int, indent)
 function dump_x(io::IOContext, x::Module, n::Int, indent)
-    print(io, highlight(typeof(x)))
+    _print_type(io, x)
     print(io, "  ")
     if _in_julia_core(x)
         printstyled(io, x; color = :light_blue)
@@ -21,7 +31,7 @@ end
 
 # from julia/base/show.jl  dump(io::IOContext, x::String, n::Int, indent)
 function dump_x(io::IOContext, x::String, n::Int, indent)
-    print(io, highlight(typeof(x)))
+    _print_type(io, x)
     print(io, "  ")
     print(io, highlight(repr(x)))
 end
@@ -29,7 +39,7 @@ end
 # from julia/base/show.jl  function dump(io::IOContext, x::Array, n::Int, indent)
 using Base: show_circular, dump_elts
 function dump_x(io::IOContext, x::Array, n::Int, indent)
-    print(io, highlight(repr(typeof(x))))
+    _print_type(io, x)
     print(io, "  ")
     if x isa Vector
         print(io, "length = ", highlight(length(x)))
@@ -78,8 +88,9 @@ function dump_x(io::IOContext, x::Array, n::Int, indent)
 end
 
 # from julia/base/show.jl  function dump(io::IOContext, x::DataType, n::Int, indent)
-using Base: _NAMEDTUPLE_NAME, datatype_fieldtypes, DUMP_DEFAULT_MAXDEPTH
+using Base: _NAMEDTUPLE_NAME, datatype_fieldtypes
 function dump_x(io::IOContext, x::DataType, n::Int, indent)
+    print(io, "  ")
     # For some reason, tuples are structs
     is_struct = isstructtype(x) && !(x <: Tuple)
     is_mut = is_struct && ismutabletype(x)
@@ -112,18 +123,18 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
             return
         end
         fields = fieldnames(x)
-        fieldtypes = datatype_fieldtypes(x)
+        _field_types = datatype_fieldtypes(x)
         for idx in eachindex(fields)
             println(io)
             print(io, indent, "  ")
             is_mut && isconst(x, idx) && print(io, "const ")
             print(io, fields[idx])
-            if isassigned(fieldtypes, idx)
+            if isassigned(_field_types, idx)
                 printstyled(io, "::"; color = :light_black)
-                print(tvar_io, highlight(fieldtypes[idx]))
+                print(tvar_io, highlight(_field_types[idx]))
             end
         end
-    elseif n == DUMP_DEFAULT_MAXDEPTH
+    elseif get(io, :SHOWN_SET, nothing) === nothing
         for name in propertynames(x)
             name === :instance && continue
             println(io)
@@ -139,34 +150,41 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
     nothing
 end
 
-# from julia/base/show.jl  dump(io::IOContext, @nospecialize(x), n::Int, indent)
-using Base: undef_ref_str
-function dump_x(io::IOContext, @nospecialize(x), n::Int, indent)
+function dump_x(io::IOContext, x::Function, n::Int, indent)
     T = typeof(x)
-    if isa(x, Function)
-        print(io, highlight(T))
-    else
-        if _in_julia_core(parentmodule(T))
-            print(io, highlight(T))
-        else
-            printstyled(io, T; color = :green)
-        end
-    end
+    print(io, highlight(T))
     dump_object(io, x, n, indent)
 end
 
 # from julia/base/show.jl  dump(io::IOContext, @nospecialize(x), n::Int, indent)
+using Base: undef_ref_str
+function dump_x(io::IOContext, @nospecialize(x), n::Int, indent)
+    _print_type(io, x)
+    dump_object(io, x, n, indent)
+end
+
+# called from dump_object
+function dump_field(io::IOContext, x, n::Int, indent, T, field::Int)
+    _field_types = fieldtypes(T)
+    T = _field_types[field]
+    print(io, highlight(repr(T)))
+    xfield = getfield(x, field)
+    recur_io = IOContext(io, :PRINTED => xfield)
+    dump_x(recur_io, xfield, n - 1, string(indent, "  "))
+end
+
+# from julia/base/show.jl  dump(io::IOContext, @nospecialize(x), n::Int, indent)
 function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
-    T = typeof(x)
     nf = nfields(x)
     if nf > 0
         if n > 0 && !show_circular(io, x)
             recur_io = IOContext(io, Pair{Symbol,Any}(:SHOWN_SET, x))
+            T = typeof(x)
             for field in 1:nf
                 println(io)
                 print(io, indent, "  ")
                 field_name = fieldname(T, field)
-                if field == field_name
+                if field == field_name # Int
                     printstyled(io, field; color = :light_cyan)
                     printstyled(io, ": "; color = :light_black)
                 else
@@ -174,7 +192,7 @@ function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
                     printstyled(io, "::"; color = :light_black)
                 end
                 if isdefined(x, field)
-                    dump_x(recur_io, getfield(x, field), n - 1, string(indent, "  "))
+                    dump_field(recur_io, x, n - 1, indent, T, field)
                 else
                     print(io, highlight(undef_ref_str))
                 end
@@ -196,14 +214,14 @@ function dump_x(io::IOContext, x::Core.TypeofBottom, n::Int, indent) # x === Uni
 end
 
 function dump_x(io::IOContext, x::Bool, n::Int, indent)
-    print(io, highlight(typeof(x)))
+    _print_type(io, x)
     print(io, "  ")
     printstyled(io, x; color = x ? :light_green : :light_red)
     nothing
 end
 
 function dump_x(io::IOContext, x::AbstractChar, n::Int, indent)
-    print(io, highlight(typeof(x)))
+    _print_type(io, x)
     print(io, "  ")
     if isdefined(REPL, :show_repl)
         REPL.show_repl(io, MIME("text/plain"), x)
@@ -218,36 +236,37 @@ const dumptruck_limit_full = 2 * dumptruck_limit_half
 
 # from julia/base/show.jl  function dump(io::IOContext, x::Array, n::Int, indent)
 function dump_x(io::IOContext, x::AbstractDict{K,V}, n::Int, indent) where {K,V}
-    print(io, highlight(typeof(x)))
-    print(io, "  length = ", highlight(length(x)))
+    _print_type(io, x)
+    print(io, "  ")
+    print(io, "length = ", highlight(length(x)))
     if n > 0 && !isempty(x)
         recur_io = IOContext(io, :SHOWN_SET => x)
-        dict_keys = collect(keys(x))
         lx = length(x)
         println(io)
         print(io, indent, "  ")
         printstyled("("; color = :light_blue)
+        dict_keys = collect(keys(x))
         if get(io, :limit, false)::Bool
-            dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, 1, (lx <= dumptruck_limit_full ? lx : dumptruck_limit_half))
+            dump_elts_delim_dict(recur_io, x, n, indent, 1, (lx <= dumptruck_limit_full ? lx : dumptruck_limit_half), dict_keys)
             if lx > dumptruck_limit_full
                 print(io, ", ")
                 printstyled(io, "… "; color = :light_black)
                 print(io, " ")
-                dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, lx - (dumptruck_limit_half - 1), lx)
+                dump_elts_delim_dict(recur_io, x, n, indent, lx - (dumptruck_limit_half - 1), lx, dict_keys)
             end
         else
-            dump_elts_delim_dict(recur_io, x, dict_keys, n, indent, 1, lx)
+            dump_elts_delim_dict(recur_io, x, n, indent, 1, lx, dict_keys)
         end
         printstyled(")"; color = :light_blue)
     end
-    if DUMP_DEFAULT_MAXDEPTH == n
+    if get(io, :SHOWN_SET, nothing) === nothing
         dump_object(io, x, n, indent)
     end
     nothing
 end
 
 function dump_x(io::IOContext, x::LineNumberNode, n::Int, indent)
-    print(io, highlight(typeof(x)), "  ")
+    _print_type(io, x)
     if x.file isa Symbol
         file = Symbol(contractuser(String(x.file)))
         lnn = LineNumberNode(x.line, file)
@@ -287,10 +306,10 @@ function dump_elts_delim_array(io::IOContext, x, n::Int, indent, i0, i1)
     end
 end
 
-function dump_elts_delim_dict(io::IOContext, dict, dict_keys, n::Int, indent, i0, i1)
+function dump_elts_delim_dict(io::IOContext, x::AbstractDict{K,V}, n::Int, indent, i0, i1, dict_keys) where {K,V}
     for i in i0:i1
         k = dict_keys[i]
-        v = dict[k]
+        v = x[k]
         print(io, highlight(repr(k => v)))
         i < i1 && print(io, ", ")
     end
