@@ -90,7 +90,9 @@ end
 # from julia/base/show.jl  function dump(io::IOContext, x::DataType, n::Int, indent)
 using Base: _NAMEDTUPLE_NAME, datatype_fieldtypes
 function dump_x(io::IOContext, x::DataType, n::Int, indent)
-    print(io, "  ")
+    if get(io, :PRINTED, :(unreachable)) === x
+        print(io, "  ")
+    end
     # For some reason, tuples are structs
     is_struct = isstructtype(x) && !(x <: Tuple)
     is_mut = is_struct && ismutabletype(x)
