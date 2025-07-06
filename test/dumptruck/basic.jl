@@ -41,6 +41,7 @@ husky = Dog("Siberian Husky")
 struct Cat <: Animal
     breed::Union{Nothing, String}
 end
+@dump_object Cat
 @dump_object Cat(nothing)
 
 using Jive
