@@ -9,10 +9,13 @@ REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 [compat]
 REPL = "1.5, 1.6, 1.10, 1.11"
 Jive = "0.3"
+ANSIColoredPrinters = "0.0"
+julia = "1.11"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Jive = "ba5e3d4b-8524-549f-bc71-e76ad9e9deed"
+ANSIColoredPrinters = "a4c015fc-c6ff-483c-b24f-f7ea428134e9"
 
 [targets]
-test = ["Test", "Jive"]
+test = ["Test", "Jive", "ANSIColoredPrinters"]

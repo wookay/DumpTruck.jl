@@ -1,4 +1,5 @@
-module test_dumptruck_advanced
+using Jive
+@useinside Main module test_dumptruck_advanced
 
 using Test
 include(normpath(@__DIR__, "../helper/helpers.jl"))
@@ -37,5 +38,30 @@ println(DumpTruck.highlight("TypeT = supertype(Union)"))
 println(DumpTruck.highlight("lnn = LineNumberNode(@__LINE__, @__FILE__)"))
 lnn = LineNumberNode(@__LINE__, @__FILE__)
 @dump_object lnn
+
+abstract type Animal end
+struct Cat <: Animal
+    breed::Union{Nothing, String}
+end
+@dump_object Cat
+@dump_object Cat("Tiger")
+
+using DumpTruck: takestring!
+buf = IOBuffer()
+io = IOContext(buf, :color => true)
+dump(io, Cat(nothing))
+
+using ANSIColoredPrinters: PlainTextPrinter
+
+function ansi_to_plain(str::AbstractString)::String
+    buf = IOBuffer(str)
+    printer = PlainTextPrinter(buf)
+    repr("text/plain", printer)
+end
+
+@test ansi_to_plain(takestring!(buf)) === """\
+Cat
+  breed::Union{Nothing, String}  nothing
+"""
 
 end # module test_dumptruck_advanced

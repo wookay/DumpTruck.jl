@@ -38,15 +38,4 @@ dalmatian = Dog("Dalmatian")
 husky = Dog("Siberian Husky")
 @dump_object husky
 
-struct Cat <: Animal
-    breed::Union{Nothing, String}
-end
-@dump_object Cat
-@dump_object Cat(nothing)
-
-using Jive
-@test @sprint_plain(dump(Cat(nothing))) == """Cat
-  breed::Union{Nothing, String}  nothing
-"""
-
 end # module test_dumptruck_basic

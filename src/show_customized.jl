@@ -7,10 +7,14 @@ end
 function _print_type(io::IOContext, @nospecialize(x))
     get(io, :PRINTED, :(unreachable)) === x && return
     T = typeof(x)
-    if _in_julia_core(parentmodule(T))
-        print(io, highlight(repr(T)))
+    if get(io, :color, true)
+        if _in_julia_core(parentmodule(T))
+            print(io, highlight(T))
+        else
+            printstyled(io, T; color = :green)
+        end
     else
-        printstyled(io, T; color = :green)
+        print(io, repr(T))
     end
 end
 
@@ -169,7 +173,7 @@ end
 function dump_field(io::IOContext, x, n::Int, indent, T, field::Int)
     _field_types = fieldtypes(T)
     T = _field_types[field]
-    print(io, highlight(repr(T)))
+    print(io, highlight(T))
     xfield = getfield(x, field)
     recur_io = IOContext(io, :PRINTED => xfield)
     dump_x(recur_io, xfield, n - 1, string(indent, "  "))
@@ -302,7 +306,7 @@ function dump_elts_delim_array(io::IOContext, x, n::Int, indent, i0, i1)
         if !isassigned(x, i)
             print(io, highlight(undef_ref_str))
         else
-            print(io, highlight(repr(x[i])))
+            print(io, highlight(x[i]))
         end
         i < i1 && print(io, ", ")
     end
@@ -312,7 +316,7 @@ function dump_elts_delim_dict(io::IOContext, x::AbstractDict{K,V}, n::Int, inden
     for i in i0:i1
         k = dict_keys[i]
         v = x[k]
-        print(io, highlight(repr(k => v)))
+        print(io, highlight(k => v))
         i < i1 && print(io, ", ")
     end
 end
