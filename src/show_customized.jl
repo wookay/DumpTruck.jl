@@ -175,6 +175,9 @@ function dump_field(io::IOContext, x, n::Int, indent, T, field::Int)
     T = _field_types[field]
     print(io, highlight(T))
     xfield = getfield(x, field)
+    if xfield isa Core.TypeofBottom
+        print(io, "  ")
+    end
     recur_io = IOContext(io, :PRINTED => xfield)
     dump_x(recur_io, xfield, n - 1, string(indent, "  "))
 end
