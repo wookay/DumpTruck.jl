@@ -26,7 +26,7 @@ using .REPL.InteractiveUtils: supertypes
 @test Vector{Int} isa DataType
 
 TypeT = supertype(Union)
-println(DumpTruck.highlight("TypeT = supertype(Union)"))
+println(DumpTruck.highlight(stdout, "TypeT = supertype(Union)"))
 @dump_object TypeT
 @dump_object Type{T} where T
 
@@ -35,7 +35,7 @@ println(DumpTruck.highlight("TypeT = supertype(Union)"))
 @test (Type{T} where T) isa UnionAll
 @test supertype(Type{T} where T) === Any
 
-println(DumpTruck.highlight("lnn = LineNumberNode(@__LINE__, @__FILE__)"))
+println(DumpTruck.highlight(stdout, "lnn = LineNumberNode(@__LINE__, @__FILE__)"))
 lnn = LineNumberNode(@__LINE__, @__FILE__)
 @dump_object lnn
 
@@ -48,18 +48,9 @@ end
 
 using DumpTruck: takestring!
 buf = IOBuffer()
-io = IOContext(buf, :color => true)
+io = IOContext(buf, :color => false)
 dump(io, Cat(nothing))
-
-using ANSIColoredPrinters: PlainTextPrinter
-
-function ansi_to_plain(str::AbstractString)::String
-    buf = IOBuffer(str)
-    printer = PlainTextPrinter(buf)
-    repr("text/plain", printer)
-end
-
-@test ansi_to_plain(takestring!(buf)) === """\
+@test takestring!(buf) == """\
 Cat
   breed::Union{Nothing, String}  nothing
 """

@@ -9,7 +9,7 @@ function _print_type(io::IOContext, @nospecialize(x))
     T = typeof(x)
     if get(io, :color, true)
         if _in_julia_core(parentmodule(T))
-            print(io, highlight(T))
+            print(io, highlight(io, T))
         else
             printstyled(io, T; color = :green)
         end
@@ -37,7 +37,7 @@ end
 function dump_x(io::IOContext, x::String, n::Int, indent)
     _print_type(io, x)
     print(io, "  ")
-    print(io, highlight(repr(x)))
+    print(io, highlight(io, repr(x)))
 end
 
 # from julia/base/show.jl  function dump(io::IOContext, x::Array, n::Int, indent)
@@ -46,9 +46,9 @@ function dump_x(io::IOContext, x::Array, n::Int, indent)
     _print_type(io, x)
     print(io, "  ")
     if x isa Vector
-        print(io, "length = ", highlight(length(x)))
+        print(io, "length = ", highlight(io, length(x)))
     else
-        print(io, "size = ", highlight(size(x)))
+        print(io, "size = ", highlight(io, size(x)))
     end
     if eltype(x) <: Number
         if n > 0 && !isempty(x) && !show_circular(io, x)
@@ -110,7 +110,7 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
         printstyled(io, "<:"; color = :light_yellow)
         print(io, " ")
         if _in_julia_core(supertype(x))
-            print(io, highlight(supertype(x)))
+            print(io, highlight(io, supertype(x)))
         else
             printstyled(io, supertype(x); color = :light_green)
         end
@@ -137,7 +137,7 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
             print(io, fields[idx])
             if isassigned(_field_types, idx)
                 printstyled(io, "::"; color = :light_black)
-                print(tvar_io, highlight(_field_types[idx]))
+                print(tvar_io, highlight(io, _field_types[idx]))
             end
         end
     elseif get(io, :SHOWN_SET, nothing) === nothing
@@ -148,9 +148,9 @@ function dump_x(io::IOContext, x::DataType, n::Int, indent)
             print(io, name)
             printstyled(io, "::"; color = :light_black)
             prop = getproperty(x, name)
-            print(io, highlight(typeof(prop)))
+            print(io, highlight(io, typeof(prop)))
             print(io, "  ")
-            print(io, highlight(prop))
+            print(io, highlight(io, prop))
         end
     end
     nothing
@@ -158,7 +158,7 @@ end
 
 function dump_x(io::IOContext, x::Function, n::Int, indent)
     T = typeof(x)
-    print(io, highlight(T))
+    print(io, highlight(io, T))
     dump_object(io, x, n, indent)
 end
 
@@ -173,7 +173,7 @@ end
 function dump_field(io::IOContext, x, n::Int, indent, T, field::Int)
     _field_types = fieldtypes(T)
     T = _field_types[field]
-    print(io, highlight(T))
+    print(io, highlight(io, T))
     xfield = getfield(x, field)
     if xfield isa Core.TypeofBottom
         print(io, "  ")
@@ -203,13 +203,13 @@ function dump_object(io::IOContext, @nospecialize(x), n::Int, indent)
                 if isdefined(x, field)
                     dump_field(recur_io, x, n - 1, indent, T, field)
                 else
-                    print(io, highlight(undef_ref_str))
+                    print(io, highlight(io, undef_ref_str))
                 end
             end
         end
     elseif !isa(x, Function)
         print(io, "  ")
-        print(io, highlight(x))
+        print(io, highlight(io, x))
     end
     nothing
 end
@@ -218,7 +218,7 @@ end
 # dump_x (customized)
 
 function dump_x(io::IOContext, x::Core.TypeofBottom, n::Int, indent) # x === Union{}
-    print(io, highlight(x))
+    print(io, highlight(io, x))
     nothing
 end
 
@@ -247,7 +247,7 @@ const dumptruck_limit_full = 2 * dumptruck_limit_half
 function dump_x(io::IOContext, x::AbstractDict{K,V}, n::Int, indent) where {K,V}
     _print_type(io, x)
     print(io, "  ")
-    print(io, "length = ", highlight(length(x)))
+    print(io, "length = ", highlight(io, length(x)))
     if n > 0 && !isempty(x)
         recur_io = IOContext(io, :SHOWN_SET => x)
         lx = length(x)
@@ -282,7 +282,7 @@ function dump_x(io::IOContext, x::LineNumberNode, n::Int, indent)
     else
         lnn = x
     end
-    printstyled(io, highlight(lnn))
+    printstyled(io, highlight(io, lnn))
     nothing
 end
 
@@ -296,7 +296,7 @@ function dump_elts_x(io::IOContext, x::Array, n::Int, indent, i0, i1)
         printstyled(io, i; color = :light_cyan)
         print(io, ": ")
         if !isassigned(x,i)
-            print(io, highlight(undef_ref_str))
+            print(io, highlight(io, undef_ref_str))
         else
             dump_x(io, x[i], n - 1, string(indent, "  "))
         end
@@ -307,9 +307,9 @@ end
 function dump_elts_delim_array(io::IOContext, x, n::Int, indent, i0, i1)
     for i in i0:i1
         if !isassigned(x, i)
-            print(io, highlight(undef_ref_str))
+            print(io, highlight(io, undef_ref_str))
         else
-            print(io, highlight(x[i]))
+            print(io, highlight(io, x[i]))
         end
         i < i1 && print(io, ", ")
     end
@@ -319,7 +319,7 @@ function dump_elts_delim_dict(io::IOContext, x::AbstractDict{K,V}, n::Int, inden
     for i in i0:i1
         k = dict_keys[i]
         v = x[k]
-        print(io, highlight(k => v))
+        print(io, highlight(io, k => v))
         i < i1 && print(io, ", ")
     end
 end

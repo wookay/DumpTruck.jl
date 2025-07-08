@@ -10,47 +10,52 @@ function highlight
 end
 
 if isdefined(REPL, :JuliaSyntaxHighlighting) # VERSION >= v"1.12"
-    function highlight(x::AbstractString)
+    function highlight(io, x::AbstractString)
         REPL.JuliaSyntaxHighlighting.highlight(x)
     end
-    function highlight(x)
+    function highlight(io, x)
         s = sprint(show, "text/plain", x)
         REPL.JuliaSyntaxHighlighting.highlight(s)
     end
 else
     const have_color::Bool = Base.JLOptions().color == 2 ? false : true
 
-    function sprint_colored(@nospecialize(x); color::Symbol)
-        io = IOBuffer()
-        printstyled(IOContext(io, :color => have_color), x; color = color)
-        takestring!(io)
+    function sprint_colored(io, @nospecialize(x); color::Symbol)
+        buf = IOBuffer()
+        if get(io, :color, have_color)
+            io_buf = IOContext(buf, :color => true)
+            printstyled(io_buf, x; color = color)
+            takestring!(buf)
+        else
+            sprint(print, x)
+        end
     end
 
-    function highlight(x::DataType)
-        sprint_colored(x; color = :yellow)
+    function highlight(io, x::DataType)
+        sprint_colored(io, x; color = :yellow)
     end
-    function highlight(x::Union)
-        sprint_colored(x; color = :yellow)
+    function highlight(io, x::Union)
+        sprint_colored(io, x; color = :yellow)
     end
-    function highlight(x::Type{<: Number})
-        sprint_colored(x; color = :light_yellow)
+    function highlight(io, x::Type{<: Number})
+        sprint_colored(io, x; color = :light_yellow)
     end
-    function highlight(x::Ptr)
-        sprint_colored(repr(x); color = :light_magenta)
+    function highlight(io, x::Ptr)
+        sprint_colored(io, repr(x); color = :light_magenta)
     end
-    function highlight(x::Number)
-        sprint_colored(x; color = :light_magenta)
+    function highlight(io, x::Number)
+        sprint_colored(io, x; color = :light_magenta)
     end
-    function highlight(x::AbstractString)
-        sprint_colored(x; color = :light_green)
+    function highlight(io, x::AbstractString)
+        sprint_colored(io, x; color = :light_green)
     end
-    function highlight(x::Symbol)
-        sprint_colored(repr(x); color = :light_green)
+    function highlight(io, x::Symbol)
+        sprint_colored(io, repr(x); color = :light_green)
     end
-    function highlight(x::Nothing)
-        sprint_colored(x; color = :magenta)
+    function highlight(io, x::Nothing)
+        sprint_colored(io, x; color = :magenta)
     end
-    function highlight(x)
+    function highlight(io, x)
         s = sprint(show, "text/plain", x)
         s
     end
