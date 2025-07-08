@@ -38,4 +38,6 @@ dalmatian = Dog("Dalmatian")
 husky = Dog("Siberian Husky")
 @dump_object husky
 
+@dump_object Ref(1)
+
 end # module test_dumptruck_basic

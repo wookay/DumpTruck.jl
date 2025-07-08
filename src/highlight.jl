@@ -21,8 +21,8 @@ else
     const have_color::Bool = Base.JLOptions().color == 2 ? false : true
 
     function sprint_colored(io, @nospecialize(x); color::Symbol)
-        buf = IOBuffer()
         if get(io, :color, have_color)
+            buf = IOBuffer()
             io_buf = IOContext(buf, :color => true)
             printstyled(io_buf, x; color = color)
             takestring!(buf)
@@ -56,8 +56,7 @@ else
         sprint_colored(io, x; color = :magenta)
     end
     function highlight(io, x)
-        s = sprint(show, "text/plain", x)
-        s
+        sprint(show, "text/plain", x)
     end
 end
 
