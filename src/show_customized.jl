@@ -40,6 +40,13 @@ function dump_x(io::IOContext, x::String, n::Int, indent)
     print(io, highlight(io, repr(x)))
 end
 
+function dump_x(io::IOContext, x::Symbol, n::Int, indent)
+    _print_type(io, x)
+    print(io, "  ")
+    printstyled(io, repr(x); color = :cyan)
+    nothing
+end
+
 # from julia/base/show.jl  function dump(io::IOContext, x::Array, n::Int, indent)
 using Base: show_circular, dump_elts
 function dump_x(io::IOContext, x::Array, n::Int, indent)
