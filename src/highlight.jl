@@ -6,31 +6,31 @@ else
 takestring! = String ∘ take!
 end
 
+const have_color::Bool = Base.JLOptions().color == 2 ? false : true
+
+function sprint_colored(io, @nospecialize(x); color::Symbol)
+    if get(io, :color, have_color)
+        buf = IOBuffer()
+        io_buf = IOContext(buf, :color => true)
+        printstyled(io_buf, x; color = color)
+        takestring!(buf)
+    else
+        sprint(print, x)
+    end
+end
+
 function highlight
 end
 
 if isdefined(REPL, :JuliaSyntaxHighlighting) # VERSION >= v"1.12"
-    function highlight(io, x::AbstractString)
-        REPL.JuliaSyntaxHighlighting.highlight(x)
+    function highlight(io, x::DataType)::String
+        sprint_colored(io, x; color = :yellow)
     end
-    function highlight(io, x)
+    function highlight(io, x)::String
         s = sprint(show, "text/plain", x)
         REPL.JuliaSyntaxHighlighting.highlight(s)
     end
 else
-    const have_color::Bool = Base.JLOptions().color == 2 ? false : true
-
-    function sprint_colored(io, @nospecialize(x); color::Symbol)
-        if get(io, :color, have_color)
-            buf = IOBuffer()
-            io_buf = IOContext(buf, :color => true)
-            printstyled(io_buf, x; color = color)
-            takestring!(buf)
-        else
-            sprint(print, x)
-        end
-    end
-
     function highlight(io, x::DataType)
         sprint_colored(io, x; color = :yellow)
     end
