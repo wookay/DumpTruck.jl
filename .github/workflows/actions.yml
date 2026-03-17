@@ -22,9 +22,9 @@ jobs:
         julia-arch: [x64]
         os: [ubuntu-latest]
         include:
-          - julia-version: 1.12.0-beta3 # May 12, 2025
+          - julia-version: 1.12.5       # 2026-02-09
             os: ubuntu-latest
-          - julia-version: 1.11.5       # April 14, 2025
+          - julia-version: 1.11.9       # 2026-02-08
             os: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -34,3 +34,33 @@ jobs:
     - uses: julia-actions/cache@v1
     - uses: julia-actions/julia-buildpkg@v1
     - uses: julia-actions/julia-runtest@v1
+
+  CheckForUpdatesUsingSugarCubes:
+    needs: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        julia-version: [1.12.5]
+        julia-arch: [x64]
+        os: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: julia-actions/setup-julia@v1
+    - uses: julia-actions/cache@v1
+    - uses: julia-actions/julia-buildpkg@v1
+    - name: gen/check_for_updates_using_sugar_cubes.jl
+      run: |
+        git clone --depth=1 --filter=blob:none --sparse https://github.com/JuliaLang/julia sources
+        cd sources/
+        git sparse-checkout set JuliaSyntax base
+        cd ../
+
+        git clone --depth=1 https://github.com/wookay/SugarCubes.jl SugarCubes.jl
+        cd SugarCubes.jl/
+        ln -s ../sources/
+        cd ../
+        julia -e 'using Pkg; Pkg.develop(path="SugarCubes.jl")'
+
+        cd gen/
+        julia --color=yes check_for_updates_using_sugar_cubes.jl
+        cd ../
