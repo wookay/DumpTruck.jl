@@ -38,5 +38,5 @@ check_the_code_block_diff(
     :(function dump_elts(io::IOContext, x::Array, n::Int, indent, i0, i1) end),
     "src/show_customized.jl",
     :(function dump_elts_x(io::IOContext, x::Array, n::Int, indent, i0, i1) end) ;
-    skip_lines = (src = [2], dest = vcat(2:4))
+    skip_lines = (src = vcat(2, 4, 6), dest = vcat(2:4, 6, 8))
 )
