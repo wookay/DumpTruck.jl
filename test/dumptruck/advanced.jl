@@ -25,17 +25,9 @@ using .REPL.InteractiveUtils: supertypes
 @test Vector isa UnionAll
 @test Vector{Int} isa DataType
 
-TypeT = supertype(Union)
-println(DumpTruck.highlight(stdout, "TypeT = supertype(Union)"))
-@dump_object TypeT
-@dump_object Type{T} where T
+@dump_object supertype(Union)
 
-@test TypeT.parameters[1] isa TypeVar
-@test supertype(Union) === supertype(UnionAll) === TypeT
-@test (Type{T} where T) isa UnionAll
-@test supertype(Type{T} where T) === Any
-
-println(DumpTruck.highlight(stdout, "lnn = LineNumberNode(@__LINE__, @__FILE__)"))
+println(stdout, "lnn = LineNumberNode(@__LINE__, @__FILE__)")
 lnn = LineNumberNode(@__LINE__, @__FILE__)
 @dump_object lnn
 

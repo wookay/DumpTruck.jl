@@ -13,11 +13,7 @@ end
 macro dump_object(@nospecialize(x))
     printstyled("dump"; color = :cyan)
     print("(")
-    if eval(x) isa String
-        print(DumpTruck.highlight(stdout, repr(x)))
-    else
-        print(DumpTruck.highlight(stdout, string(x)))
-    end
+    print(x)
     print(")")
     println()
     dump(eval(x))
