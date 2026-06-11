@@ -1,5 +1,7 @@
 using DumpTruck
 
+if !isdefined(@__MODULE__, :dump_expr)
+
 function dump_expr(x::Expr)
     printstyled("dump"; color = :cyan)
     print("(")
@@ -19,3 +21,5 @@ macro dump_object(@nospecialize(x))
     dump(eval(x))
     println()
 end
+
+end # if
