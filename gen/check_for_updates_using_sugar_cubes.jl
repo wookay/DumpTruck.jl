@@ -26,17 +26,17 @@ function check_the_code_block_diff(src_path::String,
 end
 
 check_the_code_block_diff(
-    "sources/base/show.jl",
-    :(function dump(io::IOContext, x::DataType, n::Int, indent) end),
     "src/show_customized.jl",
-    :(function dump_x(io::IOContext, x::DataType, n::Int, indent) end) ;
-    skip_lines = (src = vcat(4:8, 10, 26, 32:34), dest = vcat(1:3, 7:11, 13:20, 36, 42:44, 47:58))
+    :(function dump_x(io::IOContext, x::DataType, n::Int, indent) end),
+    "sources/base/show.jl",
+    :(function dump(io::IOContext, x::DataType, n::Int, indent) end) ;
+    skip_lines = (src = vcat(1:3, 7:11, 13:20, 36, 42:44, 47:58), dest = vcat(4:8, 10, 26, 32:34))
 )
 
 check_the_code_block_diff(
-    "sources/base/show.jl",
-    :(function dump_elts(io::IOContext, x::Array, n::Int, indent, i0, i1) end),
     "src/show_customized.jl",
-    :(function dump_elts_x(io::IOContext, x::Array, n::Int, indent, i0, i1) end) ;
-    skip_lines = (src = vcat(2, 4, 6), dest = vcat(2:4, 6, 8))
+    :(function dump_elts_x(io::IOContext, x::Array, n::Int, indent, i0, i1) end),
+    "sources/base/show.jl",
+    :(function dump_elts(io::IOContext, x::Array, n::Int, indent, i0, i1) end) ;
+    skip_lines = (src = vcat(2:4, 6, 8), dest = vcat(2, 4, 6))
 )
